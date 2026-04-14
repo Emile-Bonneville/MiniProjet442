@@ -1,0 +1,13 @@
+# Build folders
+Debug/
+Release/
+
+# Toolchain / IDE files
+.settings/
+.mxproject
+
+# Binaries
+*.elf
+*.bin
+*.map
+*.o
