@@ -34,13 +34,10 @@
 
 /** Configure pins
      PE2   ------> QUADSPI_BK1_IO2
-     PG14   ------> ETH_TXD1
      PB5   ------> USB_OTG_HS_ULPI_D7
      PD7   ------> SPDIFRX_IN0
      PC12   ------> SDMMC1_CK
-     PG13   ------> ETH_TXD0
      PB6   ------> QUADSPI_BK1_NCS
-     PG11   ------> ETH_TX_EN
      PC11   ------> SDMMC1_D3
      PC10   ------> SDMMC1_D2
      PA12   ------> USB_OTG_FS_DP
@@ -57,19 +54,13 @@
      PB13   ------> USB_OTG_HS_ULPI_D6
      PB12   ------> USB_OTG_HS_ULPI_D5
      PC0   ------> USB_OTG_HS_ULPI_STP
-     PC1   ------> ETH_MDC
      PC2   ------> USB_OTG_HS_ULPI_DIR
      PB2   ------> QUADSPI_CLK
      PD12   ------> QUADSPI_BK1_IO1
      PD13   ------> QUADSPI_BK1_IO3
-     PA1   ------> ETH_REF_CLK
-     PC4   ------> ETH_RXD0
      PD11   ------> QUADSPI_BK1_IO0
-     PA2   ------> ETH_MDIO
      PA5   ------> USB_OTG_HS_ULPI_CK
-     PC5   ------> ETH_RXD1
      PA3   ------> USB_OTG_HS_ULPI_D0
-     PA7   ------> ETH_CRS_DV
      PB1   ------> USB_OTG_HS_ULPI_D2
      PB0   ------> USB_OTG_HS_ULPI_D1
      PB11   ------> USB_OTG_HS_ULPI_D4
@@ -127,14 +118,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
   HAL_GPIO_Init(QSPI_D2_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : RMII_TXD1_Pin RMII_TXD0_Pin RMII_TX_EN_Pin */
-  GPIO_InitStruct.Pin = RMII_TXD1_Pin|RMII_TXD0_Pin|RMII_TX_EN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
-  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
   /*Configure GPIO pins : ULPI_D7_Pin ULPI_D6_Pin ULPI_D5_Pin ULPI_D2_Pin
                            ULPI_D1_Pin ULPI_D4_Pin */
@@ -312,14 +295,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF10_OTG_HS;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : RMII_MDC_Pin RMII_RXD0_Pin RMII_RXD1_Pin */
-  GPIO_InitStruct.Pin = RMII_MDC_Pin|RMII_RXD0_Pin|RMII_RXD1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
   /*Configure GPIO pin : PB2 */
   GPIO_InitStruct.Pin = GPIO_PIN_2;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -335,14 +310,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : RMII_REF_CLK_Pin RMII_MDIO_Pin RMII_CRS_DV_Pin */
-  GPIO_InitStruct.Pin = RMII_REF_CLK_Pin|RMII_MDIO_Pin|RMII_CRS_DV_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : ULPI_CLK_Pin ULPI_D0_Pin */
   GPIO_InitStruct.Pin = ULPI_CLK_Pin|ULPI_D0_Pin;

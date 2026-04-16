@@ -20,10 +20,12 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "adc.h"
+#include "crc.h"
 #include "dac.h"
 #include "dma2d.h"
 #include "i2c.h"
 #include "ltdc.h"
+#include "lwip.h"
 #include "rtc.h"
 #include "spi.h"
 #include "tim.h"
@@ -42,11 +44,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef enum
-{
-  ECRAN_ACCUEIL = 0,
-  ECRAN_DAMES
-} TypeEcran;
+
 
 /* USER CODE END PTD */
 
@@ -62,23 +60,24 @@ typedef enum
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-static TypeEcran ecranCourant = ECRAN_ACCUEIL;
-static DamesModePartie modePartieDamesCourant = DAMES_MODE_LOCAL;
-static DamesJoueurLocal joueurLocalDamesCourant = DAMES_JOUEUR_LOCAL_BLANC;
+
+DamesModePartie modePartieDamesCourant = DAMES_MODE_LOCAL;
+DamesJoueurLocal joueurLocalDamesCourant = DAMES_JOUEUR_LOCAL_BLANC;
+TypeEcran ecranCourant = ECRAN_ACCUEIL;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
-static void AfficherEcranDames(DamesModePartie modePartie, DamesJoueurLocal joueurLocal);
-static void AfficherEcranAccueil(void);
+void AfficherEcranDames(DamesModePartie modePartie, DamesJoueurLocal joueurLocal);
+void AfficherEcranAccueil(void);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static void AfficherEcranDames(DamesModePartie modePartie, DamesJoueurLocal joueurLocal)
+void AfficherEcranDames(DamesModePartie modePartie, DamesJoueurLocal joueurLocal)
 {
   modePartieDamesCourant = modePartie;
   joueurLocalDamesCourant = joueurLocal;
@@ -92,7 +91,7 @@ static void AfficherEcranDames(DamesModePartie modePartie, DamesJoueurLocal joue
   Dames_AfficherNouvellePartie(modePartieDamesCourant, joueurLocalDamesCourant);
 }
 
-static void AfficherEcranAccueil(void)
+void AfficherEcranAccueil(void)
 {
   ecranCourant = ECRAN_ACCUEIL;
   Menu_Reinitialiser();
@@ -153,6 +152,7 @@ int main(void)
   MX_ADC1_Init();
   MX_DAC_Init();
   MX_UART7_Init();
+  MX_CRC_Init();
   /* USER CODE BEGIN 2 */
   TestUart_Initialiser();
   BSP_LCD_Init();
@@ -179,7 +179,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
+  { /*
     BSP_TS_GetState(&etatTactile);
 
     if ((etatTactile.touchDetected != 0U) && (tactileActifPrecedent == 0U))
@@ -239,6 +239,7 @@ int main(void)
     }
 
     tactileActifPrecedent = (etatTactile.touchDetected != 0U) ? 1U : 0U;
+    */
 
     /* USER CODE END WHILE */
 
