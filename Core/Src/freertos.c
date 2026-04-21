@@ -25,8 +25,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <string.h>
 #include "menu.h"
 #include "dames.h"
+#include "queue.h"
 #include "test_uart.h"
 #include "lwip.h"
 #include "lwip/api.h"
@@ -55,6 +57,8 @@
 /* USER CODE BEGIN Variables */
 extern TypeEcran ecranCourant;
 extern DamesModePartie modePartieDamesCourant;
+QueueHandle_t QueueEmissionUDP;
+QueueHandle_t QueueReceptionUDP;
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
@@ -70,6 +74,11 @@ osMessageQId QueueEmissionUDPHandle;
 
 extern void AfficherEcranDames(DamesModePartie modePartie, DamesJoueurLocal joueurLocal);
 extern void AfficherEcranAccueil(void);
+
+uint8_t UDP_EnvoyerMessage(const char* message);
+uint8_t UDP_MessageRecuEstPret(void);
+uint8_t UDP_RecupererDernierMessageRecu(char* messageRecu, uint16_t tailleMax);
+void UDP_AcquitterDernierMessageRecu(void);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -127,6 +136,8 @@ void MX_FREERTOS_Init(void) {
   QueueEmissionUDPHandle = osMessageCreate(osMessageQ(QueueEmissionUDP), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
+  QueueEmissionUDP = xQueueCreate(5, TAILLE_MESSAGE_COUP_MAX);
+  QueueReceptionUDP = xQueueCreate(5, TAILLE_MESSAGE_COUP_MAX);
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
 
@@ -343,6 +354,53 @@ void fudpEmission(void const * argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+
+uint8_t UDP_EnvoyerMessage(const char* message)
+{
+  if (QueueEmissionUDP != NULL)
+  {
+    /* Insertion du message dans la file d'attente (sans délai de blocage) */
+    if (xQueueSend(QueueEmissionUDP, message, 0) == pdPASS)
+    {
+      return 1U;
+    }
+  }
+  return 0U;
+}
+
+  uint8_t UDP_MessageRecuEstPret(void)
+  {
+    if (QueueReceptionUDP != NULL)
+    {
+      /* Vérifie si au moins un message est présent dans la file */
+      return (uxQueueMessagesWaiting(QueueReceptionUDP) > 0U) ? 1U : 0U;
+    }
+    return 0U;
+  }
+
+  uint8_t UDP_RecupererDernierMessageRecu(char* messageRecu, uint16_t tailleMax)
+  {
+    if (QueueReceptionUDP != NULL)
+    {
+      /* Lecture du message sans le retirer de la file (fonctionnement Peek) */
+      if (xQueuePeek(QueueReceptionUDP, messageRecu, 0) == pdPASS)
+      {
+        return 1U;
+      }
+    }
+    return 0U;
+  }
+
+  void UDP_AcquitterDernierMessageRecu(void)
+  {
+    char bufferPoubelle[TAILLE_MESSAGE_COUP_MAX];
+    if (QueueReceptionUDP != NULL)
+    {
+      /* Retrait effectif du message de la file de réception */
+      xQueueReceive(QueueReceptionUDP, bufferPoubelle, 0);
+    }
+  }
+
 
 /* USER CODE END Application */
 

@@ -1407,7 +1407,7 @@ static void DessinerInfosJeu(const EtatPartie *etat)
 
   BSP_LCD_DisplayStringAt(280, 24, (uint8_t *)texte, LEFT_MODE);
 
-  if (etat->modePartie == DAMES_MODE_UART)
+  if (etat->modePartie == DAMES_MODE_UDP)
   {
     snprintf(texteJoueurLocal, sizeof(texteJoueurLocal), "Vous : %s",
              etat->joueurLocal == JOUEUR_BLANC ? "blanc" : "noir");

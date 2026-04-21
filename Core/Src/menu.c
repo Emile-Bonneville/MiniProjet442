@@ -19,7 +19,7 @@
 #define CARTE_MODE_LARGEUR     280U
 #define CARTE_MODE_HAUTEUR     54U
 #define CARTE_MODE_LOCAL_Y     78U
-#define CARTE_MODE_UART_Y      144U
+#define CARTE_MODE_UDP_Y      144U
 #define BOUTON_RETOUR_X        160U
 #define BOUTON_RETOUR_Y        214U
 #define BOUTON_RETOUR_LARGEUR  160U
@@ -29,7 +29,7 @@ typedef enum
 {
   MENU_ECRAN_ACCUEIL = 0,
   MENU_ECRAN_DAMES_MODE,
-  MENU_ECRAN_DAMES_UART_JOUEUR
+  MENU_ECRAN_DAMES_UDP_JOUEUR
 } TypeEcranMenu;
 
 static TypeEcranMenu ecranMenuCourant = MENU_ECRAN_ACCUEIL;
@@ -42,7 +42,7 @@ static void DessinerCarte(uint16_t x, uint16_t y, uint16_t largeur, uint16_t hau
                           uint32_t couleurFond, const char *titre, const char *sousTitre);
 static void AfficherAccueilPrincipal(void);
 static void AfficherSousMenuDames(void);
-static void AfficherSousMenuDamesUart(void);
+static void AfficherSousMenuDamesUdp(void);
 
 void Menu_Reinitialiser(void)
 {
@@ -55,9 +55,9 @@ void Menu_Afficher(void)
   {
     AfficherSousMenuDames();
   }
-  else if (ecranMenuCourant == MENU_ECRAN_DAMES_UART_JOUEUR)
+  else if (ecranMenuCourant == MENU_ECRAN_DAMES_UDP_JOUEUR)
   {
-    AfficherSousMenuDamesUart();
+    AfficherSousMenuDamesUdp();
   }
   else
   {
@@ -86,29 +86,29 @@ MenuAction Menu_GererTouch(uint16_t x, uint16_t y)
       return MENU_ACTION_LANCER_DAMES_LOCAL;
     }
 
-    if (CoordonneesSontDansZone(x, y, CARTE_MODE_X, CARTE_MODE_UART_Y, CARTE_MODE_LARGEUR, CARTE_MODE_HAUTEUR) != 0U)
+    if (CoordonneesSontDansZone(x, y, CARTE_MODE_X, CARTE_MODE_UDP_Y, CARTE_MODE_LARGEUR, CARTE_MODE_HAUTEUR) != 0U)
     {
-      ecranMenuCourant = MENU_ECRAN_DAMES_UART_JOUEUR;
+      ecranMenuCourant = MENU_ECRAN_DAMES_UDP_JOUEUR;
       Menu_Afficher();
       return MENU_ACTION_AUCUNE;
     }
   }
-  else if (ecranMenuCourant == MENU_ECRAN_DAMES_UART_JOUEUR)
+  else if (ecranMenuCourant == MENU_ECRAN_DAMES_UDP_JOUEUR)
   {
     if (CoordonneesSontDansZone(x, y, CARTE_MODE_X, CARTE_MODE_LOCAL_Y, CARTE_MODE_LARGEUR, CARTE_MODE_HAUTEUR) != 0U)
     {
-      return MENU_ACTION_LANCER_DAMES_UART_BLANC;
+      return MENU_ACTION_LANCER_DAMES_UDP_BLANC;
     }
 
-    if (CoordonneesSontDansZone(x, y, CARTE_MODE_X, CARTE_MODE_UART_Y, CARTE_MODE_LARGEUR, CARTE_MODE_HAUTEUR) != 0U)
+    if (CoordonneesSontDansZone(x, y, CARTE_MODE_X, CARTE_MODE_UDP_Y, CARTE_MODE_LARGEUR, CARTE_MODE_HAUTEUR) != 0U)
     {
-      return MENU_ACTION_LANCER_DAMES_UART_NOIR;
+      return MENU_ACTION_LANCER_DAMES_UDP_NOIR;
     }
   }
 
   if (CoordonneesSontDansZone(x, y, BOUTON_RETOUR_X, BOUTON_RETOUR_Y, BOUTON_RETOUR_LARGEUR, BOUTON_RETOUR_HAUTEUR) != 0U)
   {
-    if (ecranMenuCourant == MENU_ECRAN_DAMES_UART_JOUEUR)
+    if (ecranMenuCourant == MENU_ECRAN_DAMES_UDP_JOUEUR)
     {
       ecranMenuCourant = MENU_ECRAN_DAMES_MODE;
     }
@@ -151,8 +151,8 @@ static void AfficherSousMenuDames(void)
 
   DessinerCarte(CARTE_MODE_X, CARTE_MODE_LOCAL_Y, CARTE_MODE_LARGEUR, CARTE_MODE_HAUTEUR,
                 COULEUR_CARTE_JEU, "1 carte", "Deux joueurs sur le meme ecran");
-  DessinerCarte(CARTE_MODE_X, CARTE_MODE_UART_Y, CARTE_MODE_LARGEUR, CARTE_MODE_HAUTEUR,
-                COULEUR_CARTE_JEU, "2 cartes UART", "Une carte par joueur");
+  DessinerCarte(CARTE_MODE_X, CARTE_MODE_UDP_Y, CARTE_MODE_LARGEUR, CARTE_MODE_HAUTEUR,
+                COULEUR_CARTE_JEU, "2 cartes UDP", "Une carte par joueur");
 
   DessinerCarte(BOUTON_RETOUR_X, BOUTON_RETOUR_Y, BOUTON_RETOUR_LARGEUR, BOUTON_RETOUR_HAUTEUR,
                 COULEUR_BOUTON_RETOUR, "Retour", NULL);
@@ -161,7 +161,7 @@ static void AfficherSousMenuDames(void)
   BSP_LCD_Clear(0x00000000);
 }
 
-static void AfficherSousMenuDamesUart(void)
+static void AfficherSousMenuDamesUdp(void)
 {
   BSP_LCD_SelectLayer(0);
   BSP_LCD_Clear(COULEUR_ACCUEIL_FOND);
@@ -169,11 +169,11 @@ static void AfficherSousMenuDamesUart(void)
   BSP_LCD_SetFont(&Font24);
   BSP_LCD_SetTextColor(COULEUR_TITRE_ACCUEIL);
   BSP_LCD_SetBackColor(COULEUR_ACCUEIL_FOND);
-  AfficherTexteCentreZone(0, 20, (uint16_t)BSP_LCD_GetXSize(), "2 cartes UART");
+  AfficherTexteCentreZone(0, 20, (uint16_t)BSP_LCD_GetXSize(), "2 cartes UDP");
 
   DessinerCarte(CARTE_MODE_X, CARTE_MODE_LOCAL_Y, CARTE_MODE_LARGEUR, CARTE_MODE_HAUTEUR,
                 COULEUR_CARTE_JEU, "Joueur blanc", "Cette carte joue les blancs");
-  DessinerCarte(CARTE_MODE_X, CARTE_MODE_UART_Y, CARTE_MODE_LARGEUR, CARTE_MODE_HAUTEUR,
+  DessinerCarte(CARTE_MODE_X, CARTE_MODE_UDP_Y, CARTE_MODE_LARGEUR, CARTE_MODE_HAUTEUR,
                 COULEUR_CARTE_JEU, "Joueur noir", "Cette carte joue les noirs");
 
   DessinerCarte(BOUTON_RETOUR_X, BOUTON_RETOUR_Y, BOUTON_RETOUR_LARGEUR, BOUTON_RETOUR_HAUTEUR,
