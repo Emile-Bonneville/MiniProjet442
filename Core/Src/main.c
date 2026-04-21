@@ -83,9 +83,9 @@ void AfficherEcranDames(DamesModePartie modePartie, DamesJoueurLocal joueurLocal
   joueurLocalDamesCourant = joueurLocal;
   ecranCourant = ECRAN_DAMES;
 
-  if (modePartieDamesCourant == DAMES_MODE_UART)
+  if (modePartieDamesCourant == DAMES_MODE_UDP)
   {
-    TestUart_Initialiser();
+    //TestUart_Initialiser();
   }
 
   Dames_AfficherNouvellePartie(modePartieDamesCourant, joueurLocalDamesCourant);
@@ -154,7 +154,7 @@ int main(void)
   MX_UART7_Init();
   MX_CRC_Init();
   /* USER CODE BEGIN 2 */
-  TestUart_Initialiser();
+  //TestUart_Initialiser();
   BSP_LCD_Init();
   BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
   BSP_LCD_LayerDefaultInit(1, LCD_FB_START_ADDRESS+ BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4);

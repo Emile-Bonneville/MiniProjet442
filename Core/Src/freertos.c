@@ -28,6 +28,9 @@
 #include "menu.h"
 #include "dames.h"
 #include "test_uart.h"
+#include "lwip.h"
+#include "lwip/api.h"
+#include <math.h>
 #include "stm32746g_discovery_lcd.h"
 #include "stm32746g_discovery_ts.h"
 
@@ -58,6 +61,9 @@ osThreadId defaultTaskHandle;
 osThreadId Affichage_JeuHandle;
 osThreadId Logique_jeuHandle;
 osThreadId Tache_IPHandle;
+osThreadId udpReceptionHandle;
+osThreadId udpEmissionHandle;
+osMessageQId QueueEmissionUDPHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -71,6 +77,8 @@ void StartDefaultTask(void const * argument);
 void Fonction_affichage_jeu(void const * argument);
 void fct_logique_jeu(void const * argument);
 void fct_com_IP(void const * argument);
+void fudpReception(void const * argument);
+void fudpEmission(void const * argument);
 
 extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -113,6 +121,11 @@ void MX_FREERTOS_Init(void) {
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* definition and creation of QueueEmissionUDP */
+  osMessageQDef(QueueEmissionUDP, 16, uint16_t);
+  QueueEmissionUDPHandle = osMessageCreate(osMessageQ(QueueEmissionUDP), NULL);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -133,6 +146,14 @@ void MX_FREERTOS_Init(void) {
   /* definition and creation of Tache_IP */
   osThreadDef(Tache_IP, fct_com_IP, osPriorityNormal, 0, 512);
   Tache_IPHandle = osThreadCreate(osThread(Tache_IP), NULL);
+
+  /* definition and creation of udpReception */
+  osThreadDef(udpReception, fudpReception, osPriorityNormal, 0, 1024);
+  udpReceptionHandle = osThreadCreate(osThread(udpReception), NULL);
+
+  /* definition and creation of udpEmission */
+  osThreadDef(udpEmission, fudpEmission, osPriorityNormal, 0, 1024);
+  udpEmissionHandle = osThreadCreate(osThread(udpEmission), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -190,13 +211,13 @@ void Fonction_affichage_jeu(void const * argument)
         {
           AfficherEcranDames(DAMES_MODE_LOCAL, DAMES_JOUEUR_LOCAL_BLANC);
         }
-        else if (actionMenu == MENU_ACTION_LANCER_DAMES_UART_BLANC)
+        else if (actionMenu == MENU_ACTION_LANCER_DAMES_UDP_BLANC)
         {
-          AfficherEcranDames(DAMES_MODE_UART, DAMES_JOUEUR_LOCAL_BLANC);
+          AfficherEcranDames(DAMES_MODE_UDP, DAMES_JOUEUR_LOCAL_BLANC);
         }
-        else if (actionMenu == MENU_ACTION_LANCER_DAMES_UART_NOIR)
+        else if (actionMenu == MENU_ACTION_LANCER_DAMES_UDP_NOIR)
         {
-          AfficherEcranDames(DAMES_MODE_UART, DAMES_JOUEUR_LOCAL_NOIR);
+          AfficherEcranDames(DAMES_MODE_UDP, DAMES_JOUEUR_LOCAL_NOIR);
         }
       }
       else if (ecranCourant == ECRAN_DAMES)
@@ -235,27 +256,27 @@ void fct_logique_jeu(void const * argument)
   for(;;)
   {
     /* La communication n'est active que sur l'écran du jeu en mode distant */
-    if ((ecranCourant == ECRAN_DAMES) && (modePartieDamesCourant == DAMES_MODE_UART))
+    if ((ecranCourant == ECRAN_DAMES) && (modePartieDamesCourant == DAMES_MODE_UDP))
     {
       /* Traitement de l'envoi du coup local */
       if ((Dames_CoupLocalEstPret() != 0U) &&
           (Dames_RecupererDernierCoupLocal(&coupLocal) != 0U) &&
           (Dames_ConvertirCoupEnTexte(&coupLocal, messageCoup, sizeof(messageCoup)) != 0U))
       {
-        if (TestUart_EnvoyerMessage(messageCoup) != 0U)
+        if (UDP_EnvoyerMessage(messageCoup) != 0U)
         {
           Dames_AcquitterDernierCoupLocal();
         }
       }
 
       /* Traitement de la réception du coup distant */
-      if ((TestUart_MessageRecuEstPret() != 0U) &&
-          (TestUart_RecupererDernierMessageRecu(messageRecu, sizeof(messageRecu)) != 0U))
+      if ((UDP_MessageRecuEstPret() != 0U) &&
+          (UDP_RecupererDernierMessageRecu(messageRecu, sizeof(messageRecu)) != 0U))
       {
         if ((Dames_ConvertirTexteEnCoup(messageRecu, &coupRecu) != 0U) &&
             (Dames_AppliquerCoupRecu(&coupRecu) != 0U))
         {
-          TestUart_AcquitterDernierMessageRecu();
+          UDP_AcquitterDernierMessageRecu();
         }
       }
     }
@@ -282,6 +303,42 @@ void fct_com_IP(void const * argument)
     osDelay(1);
   }
   /* USER CODE END fct_com_IP */
+}
+
+/* USER CODE BEGIN Header_fudpReception */
+/**
+* @brief Function implementing the udpReception thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_fudpReception */
+void fudpReception(void const * argument)
+{
+  /* USER CODE BEGIN fudpReception */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END fudpReception */
+}
+
+/* USER CODE BEGIN Header_fudpEmission */
+/**
+* @brief Function implementing the udpEmission thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_fudpEmission */
+void fudpEmission(void const * argument)
+{
+  /* USER CODE BEGIN fudpEmission */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END fudpEmission */
 }
 
 /* Private application code --------------------------------------------------*/
