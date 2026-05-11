@@ -117,6 +117,12 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+	CoupDames coupLocal;
+	  CoupDames coupRecu;
+	  char messageCoup[TAILLE_MESSAGE_COUP_MAX];
+	  char messageRecu[TAILLE_MESSAGE_COUP_MAX];
+	  TS_StateTypeDef etatTactile = {0};
+	  uint8_t tactileActifPrecedent = 0U;
 	char text[60]={};
 	static TS_StateTypeDef  TS_State;
 	uint32_t potl,potr,joystick_h;
@@ -182,6 +188,7 @@ int main(void)
 	BSP_LCD_SetBackColor(00);
 
 	BSP_TS_Init(BSP_LCD_GetXSize(), BSP_LCD_GetYSize());
+	AfficherEcranAccueil();
 
 	//Démarrage du timer 7 avec interruptions
 
