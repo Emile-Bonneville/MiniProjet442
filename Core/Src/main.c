@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2022 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -22,6 +22,7 @@
 #include "adc.h"
 #include "crc.h"
 #include "dac.h"
+#include "dma.h"
 #include "dma2d.h"
 #include "i2c.h"
 #include "ltdc.h"
@@ -35,16 +36,20 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "math.h"
+#include "stm32746g_discovery_lcd.h"
+#include "stm32746g_discovery_ts.h"
+#include "stm32f7xx_hal_uart.h"
+#include "stdio.h"
+#include "Capitole.h"
+#include "your_latest_trick.h" // ylt_data
 #include "menu.h"
 #include "dames.h"
 #include "test_uart.h"
-#include "stm32746g_discovery_lcd.h"
-#include "stm32746g_discovery_ts.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 
 /* USER CODE END PTD */
 
@@ -60,10 +65,15 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint32_t joystick_v;
+uint32_t n=0;
+uint8_t buffer[128];
+uint32_t cursor=128;
+uint32_t k;
 DamesModePartie modePartieDamesCourant = DAMES_MODE_LOCAL;
 DamesJoueurLocal joueurLocalDamesCourant = DAMES_JOUEUR_LOCAL_BLANC;
 TypeEcran ecranCourant = ECRAN_ACCUEIL;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -72,7 +82,6 @@ void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
 void AfficherEcranDames(DamesModePartie modePartie, DamesJoueurLocal joueurLocal);
 void AfficherEcranAccueil(void);
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -108,12 +117,15 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  CoupDames coupLocal;
-  CoupDames coupRecu;
-  char messageCoup[TAILLE_MESSAGE_COUP_MAX];
-  char messageRecu[TAILLE_MESSAGE_COUP_MAX];
-  TS_StateTypeDef etatTactile = {0};
-  uint8_t tactileActifPrecedent = 0U;
+	char text[60]={};
+	static TS_StateTypeDef  TS_State;
+	uint32_t potl,potr,joystick_h;
+	ADC_ChannelConfTypeDef sConfig = {0};
+	sConfig.Rank = ADC_REGULAR_RANK_1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+	uint8_t BP1;
+	uint8_t BP2;
+	uint32_t periode=1000;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -134,6 +146,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ADC3_Init();
   MX_DMA2D_Init();
   MX_FMC_Init();
@@ -152,20 +165,41 @@ int main(void)
   MX_ADC1_Init();
   MX_DAC_Init();
   MX_UART7_Init();
+  MX_TIM7_Init();
   MX_CRC_Init();
   /* USER CODE BEGIN 2 */
-  //TestUart_Initialiser();
-  BSP_LCD_Init();
-  BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
-  BSP_LCD_LayerDefaultInit(1, LCD_FB_START_ADDRESS+ BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4);
-  BSP_LCD_DisplayOn();
-  AfficherEcranAccueil();
-  BSP_LCD_SelectLayer(1);
-  BSP_LCD_SetFont(&Font12);
-  BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
-  BSP_LCD_SetBackColor(00);
+	BSP_LCD_Init();
+	BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
+	BSP_LCD_LayerDefaultInit(1, LCD_FB_START_ADDRESS+ BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4);
+	BSP_LCD_DisplayOn();
+	BSP_LCD_SelectLayer(0);
+	BSP_LCD_Clear(LCD_COLOR_RED);
+	BSP_LCD_DrawBitmap(0,0,(uint8_t*)Capitole_bmp);
+	BSP_LCD_SelectLayer(1);
+	BSP_LCD_Clear(00);
+	BSP_LCD_SetFont(&Font12);
+	BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
+	BSP_LCD_SetBackColor(00);
 
-  BSP_TS_Init(BSP_LCD_GetXSize(), BSP_LCD_GetYSize());
+	BSP_TS_Init(BSP_LCD_GetXSize(), BSP_LCD_GetYSize());
+
+	//Démarrage du timer 7 avec interruptions
+
+	for(k=0;k<128;k++){
+		buffer[k] = ylt_data[k];
+	}
+	if (HAL_TIM_Base_Start_IT(&htim7) != HAL_OK) {
+		Error_Handler();
+	}
+	//Démarrage du DAC associé au tableau sinus12bit via le DMA
+	//	if (HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t*) sinus12bit, 360,
+	//			DAC_ALIGN_12B_R) != HAL_OK) {
+	//		Error_Handler();
+	//	}
+	if (HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t*) buffer, 128,
+			DAC_ALIGN_8B_R) != HAL_OK) {
+		Error_Handler();
+	}
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in cmsis_os2.c) */
@@ -178,73 +212,14 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  { /*
-    BSP_TS_GetState(&etatTactile);
+	while (1)
+	{
 
-    if ((etatTactile.touchDetected != 0U) && (tactileActifPrecedent == 0U))
-    {
-      if (ecranCourant == ECRAN_ACCUEIL)
-      {
-        MenuAction actionMenu;
-
-        actionMenu = Menu_GererTouch(etatTactile.touchX[0], etatTactile.touchY[0]);
-
-        if (actionMenu == MENU_ACTION_LANCER_DAMES_LOCAL)
-        {
-          AfficherEcranDames(DAMES_MODE_LOCAL, DAMES_JOUEUR_LOCAL_BLANC);
-        }
-        else if (actionMenu == MENU_ACTION_LANCER_DAMES_UART_BLANC)
-        {
-          AfficherEcranDames(DAMES_MODE_UART, DAMES_JOUEUR_LOCAL_BLANC);
-        }
-        else if (actionMenu == MENU_ACTION_LANCER_DAMES_UART_NOIR)
-        {
-          AfficherEcranDames(DAMES_MODE_UART, DAMES_JOUEUR_LOCAL_NOIR);
-        }
-      }
-      else if (ecranCourant == ECRAN_DAMES)
-      {
-        if (Dames_GererTouch(etatTactile.touchX[0], etatTactile.touchY[0]) == DAMES_ACTION_QUITTER)
-        {
-          AfficherEcranAccueil();
-        }
-      }
-    }
-
-    if (ecranCourant == ECRAN_DAMES)
-    {
-      if (modePartieDamesCourant == DAMES_MODE_UART)
-      {
-        if ((Dames_CoupLocalEstPret() != 0U) &&
-            (Dames_RecupererDernierCoupLocal(&coupLocal) != 0U) &&
-            (Dames_ConvertirCoupEnTexte(&coupLocal, messageCoup, sizeof(messageCoup)) != 0U))
-        {
-          if (TestUart_EnvoyerMessage(messageCoup) != 0U)
-          {
-            Dames_AcquitterDernierCoupLocal();
-          }
-        }
-
-        if ((TestUart_MessageRecuEstPret() != 0U) &&
-            (TestUart_RecupererDernierMessageRecu(messageRecu, sizeof(messageRecu)) != 0U))
-        {
-          if ((Dames_ConvertirTexteEnCoup(messageRecu, &coupRecu) != 0U) &&
-              (Dames_AppliquerCoupRecu(&coupRecu) != 0U))
-          {
-            TestUart_AcquitterDernierMessageRecu();
-          }
-        }
-      }
-    }
-
-    tactileActifPrecedent = (etatTactile.touchDetected != 0U) ? 1U : 0U;
-    */
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+	}
   /* USER CODE END 3 */
 }
 
@@ -307,6 +282,20 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
+void HAL_DAC_ConvHalfCpltCallbackCh1(DAC_HandleTypeDef *hdac) {
+	HAL_GPIO_TogglePin(LED18_GPIO_Port, LED18_Pin);
+	for(uint8_t i=0; i<64; i++){
+		buffer[i] = ylt_data[cursor%ylt_length];
+		cursor++;
+	}
+}
+void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef *hdac) {
+	for(uint8_t i=0; i<64;i++){
+		buffer[64+i] = ylt_data[cursor%ylt_length];
+		cursor++;
+	}
+}
+
 /* USER CODE END 4 */
 
 /**
@@ -327,7 +316,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-
+	if (htim->Instance == TIM7) {
+		HAL_GPIO_TogglePin(LED16_GPIO_Port, LED16_Pin);
+	}
   /* USER CODE END Callback 1 */
 }
 
@@ -338,11 +329,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+	/* User can add his own implementation to report the HAL error return state */
+	__disable_irq();
+	while (1)
+	{
+	}
   /* USER CODE END Error_Handler_Debug */
 }
 #ifdef USE_FULL_ASSERT
@@ -356,7 +347,7 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
+	/* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }

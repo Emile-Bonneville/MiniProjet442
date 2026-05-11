@@ -36,11 +36,7 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-typedef enum
-{
-  ECRAN_ACCUEIL = 0,
-  ECRAN_DAMES
-} TypeEcran;
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

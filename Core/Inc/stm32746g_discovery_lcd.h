@@ -144,6 +144,7 @@ typedef enum
 #define LCD_COLOR_BROWN         ((uint32_t)0xFFA52A2A)
 #define LCD_COLOR_ORANGE        ((uint32_t)0xFFFFA500)
 #define LCD_COLOR_TRANSPARENT   ((uint32_t)0xFF000000)
+#define LCD_COLOR_PINK			((uint32_t)0xFFFF0099)
 
 /** 
   * @brief LCD default font 

@@ -25,6 +25,7 @@
 /* USER CODE END 0 */
 
 DAC_HandleTypeDef hdac;
+DMA_HandleTypeDef hdma_dac1;
 
 /* DAC init function */
 void MX_DAC_Init(void)
@@ -50,7 +51,7 @@ void MX_DAC_Init(void)
 
   /** DAC channel OUT1 config
   */
-  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
+  sConfig.DAC_Trigger = DAC_TRIGGER_T7_TRGO;
   sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
   if (HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_1) != HAL_OK)
   {
@@ -83,6 +84,28 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+    /* DAC DMA Init */
+    /* DAC1 Init */
+    hdma_dac1.Instance = DMA1_Stream5;
+    hdma_dac1.Init.Channel = DMA_CHANNEL_7;
+    hdma_dac1.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_dac1.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_dac1.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_dac1.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_dac1.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_dac1.Init.Mode = DMA_CIRCULAR;
+    hdma_dac1.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_dac1.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+    hdma_dac1.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
+    hdma_dac1.Init.MemBurst = DMA_MBURST_SINGLE;
+    hdma_dac1.Init.PeriphBurst = DMA_PBURST_SINGLE;
+    if (HAL_DMA_Init(&hdma_dac1) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(dacHandle,DMA_Handle1,hdma_dac1);
+
     /* DAC interrupt Init */
     HAL_NVIC_SetPriority(TIM6_DAC_IRQn, 15, 0);
     HAL_NVIC_EnableIRQ(TIM6_DAC_IRQn);
@@ -107,6 +130,9 @@ void HAL_DAC_MspDeInit(DAC_HandleTypeDef* dacHandle)
     PA4     ------> DAC_OUT1
     */
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_4);
+
+    /* DAC DMA DeInit */
+    HAL_DMA_DeInit(dacHandle->DMA_Handle1);
 
     /* DAC interrupt Deinit */
     HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn);
